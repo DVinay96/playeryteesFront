@@ -10,6 +10,7 @@ import {
   Phone, 
   Mail
 } from 'lucide-react';
+import Image from 'next/image';
 
 // Styled Components
 const FooterContainer = styled.footer`
@@ -209,7 +210,7 @@ const LogoContainer = styled.div`
   margin-bottom: 1.5rem;
 `;
 
-const Logo = styled.div`
+const Logo = styled(Image)`
   width: 120px;
   height: 40px;
   background-color: ${theme.colors.background.light};
@@ -229,7 +230,7 @@ const Footer = () => {
       <FooterContent>
         <FooterSection>
           <LogoContainer>
-            <Logo>YOUR LOGO</Logo>
+            <Logo src="/PLAYERYTEES@2x.png" alt='logo' width={150} height={50}/>
           </LogoContainer>
           <p style={{ color: theme.colors.text.secondary, marginBottom: '1.5rem' }}>
             Proporcionando productos de calidad y servicio excepcional a nuestros clientes desde 1995.

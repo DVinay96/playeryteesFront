@@ -18,7 +18,6 @@ const Header = () => {
 
   const navLinks = ['nosotros', 'catalogos', 'productos', 'sucursales', 'marcas'];
 
-  // Set mounted state after component mounts to prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -34,13 +33,11 @@ const Header = () => {
 
   const handleLogout = () => {
     logout();
-    // You can add a redirect here if needed
   };
 
   return (
     <HeaderWrapper>
       <GreenStrip>
-        {/* Only render auth UI after component has mounted client-side */}
         {mounted ? (
           <TopRightContainer>
             {isAuthenticated() ? (
@@ -62,7 +59,6 @@ const Header = () => {
             )}
           </TopRightContainer>
         ) : (
-          // Empty placeholder with same height during server render
           <TopRightContainer aria-hidden="true" style={{ visibility: 'hidden' }}>
             <AuthButton href="/user/login">Placeholder</AuthButton>
           </TopRightContainer>
