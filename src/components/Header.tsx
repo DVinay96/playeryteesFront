@@ -4,14 +4,24 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useAuthStore } from '@/stores/authStore';
 
 // Header Component
 const Header = () => {
   const [activeLink, setActiveLink] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Get auth state
+  const { isAuthenticated, logout, user } = useAuthStore();
 
   const navLinks = ['nosotros', 'catalogos', 'productos', 'sucursales', 'marcas'];
+
+  // Set mounted state after component mounts to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,9 +32,43 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleLogout = () => {
+    logout();
+    // You can add a redirect here if needed
+  };
+
   return (
     <HeaderWrapper>
-      <GreenStrip />
+      <GreenStrip>
+        {/* Only render auth UI after component has mounted client-side */}
+        {mounted ? (
+          <TopRightContainer>
+            {isAuthenticated() ? (
+              <>
+                <WelcomeText>Bienvenido, {user?.name || 'Usuario'}</WelcomeText>
+                <UserButton onClick={handleLogout}>
+                  Cerrar Sesión
+                </UserButton>
+              </>
+            ) : (
+              <>
+                <AuthButton href="/user/login">
+                  Iniciar Sesión
+                </AuthButton>
+                <AuthButton href="/user/login?form=register">
+                  Registrarse
+                </AuthButton>
+              </>
+            )}
+          </TopRightContainer>
+        ) : (
+          // Empty placeholder with same height during server render
+          <TopRightContainer aria-hidden="true" style={{ visibility: 'hidden' }}>
+            <AuthButton href="/user/login">Placeholder</AuthButton>
+          </TopRightContainer>
+        )}
+      </GreenStrip>
+
       <HeaderContainer style={{ boxShadow: scrolled ? '0 4px 20px rgba(104, 171, 68, 0.2)' : '0 2px 10px rgba(0, 0, 0, 0.1)' }}>
         <LogoContainer>
           <Link href={"/"}>
@@ -55,6 +99,29 @@ const Header = () => {
                 </NavLink>
               </NavItem>
             ))}
+            
+            {/* Mobile-only login buttons */}
+            {mounted && (
+              <MobileAuthLinks>
+                {isAuthenticated() ? (
+                  <>
+                    <MobileUserInfo>Bienvenido, {user?.name || 'Usuario'}</MobileUserInfo>
+                    <MobileLogoutButton onClick={handleLogout}>
+                      Cerrar Sesión
+                    </MobileLogoutButton>
+                  </>
+                ) : (
+                  <>
+                    <MobileAuthLink href="/user/login">
+                      Iniciar Sesión
+                    </MobileAuthLink>
+                    <MobileAuthLink href="/user/login?form=register">
+                      Registrarse
+                    </MobileAuthLink>
+                  </>
+                )}
+              </MobileAuthLinks>
+            )}
           </NavLinks>
         </NavContainer>
       </HeaderContainer>
@@ -76,6 +143,112 @@ const GreenStrip = styled.div`
   height: 30px;
   background-color: ${SECONDARY_COLOR};
   width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 2rem;
+  
+  @media (max-width: 768px) {
+    padding: 0 1rem;
+    justify-content: center;
+  }
+`;
+
+const TopRightContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const AuthButton = styled(Link)`
+  color: white;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0 0.75rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  
+  &:first-child {
+    border-left: none;
+  }
+  
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const UserButton = styled.button`
+  background: none;
+  border: none;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0 0.75rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const WelcomeText = styled.span`
+  color: white;
+  font-size: 0.85rem;
+`;
+
+const MobileAuthLinks = styled.div`
+  display: none;
+  
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e0e0;
+  }
+`;
+
+const MobileUserInfo = styled.div`
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
+  margin-bottom: 0.5rem;
+`;
+
+const MobileAuthLink = styled(Link)`
+  color: ${SECONDARY_COLOR};
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.75rem;
+  text-align: center;
+  display: block;
+  
+  &:hover {
+    background-color: #f5f5f5;
+  }
+`;
+
+const MobileLogoutButton = styled.button`
+  color: ${SECONDARY_COLOR};
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.75rem;
+  text-align: center;
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  
+  &:hover {
+    background-color: #f5f5f5;
+  }
 `;
 
 const HeaderContainer = styled.header`
@@ -110,7 +283,7 @@ const NavLinks = styled.ul<NavLinksProps>`
     display: ${({ isOpen }) => (isOpen ? 'flex' : 'none')};
     flex-direction: column;
     position: absolute;
-    top: 70px;
+    top: 100px; /* Adjusted to account for green strip + header height */
     left: 0;
     right: 0;
     background-color: ${PRIMARY_COLOR};
