@@ -17,7 +17,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ image, name, brand, price }) 
             <ProductImage src={image} width={200} height={300} alt={name} />
             <Title>{name}</Title>
             <Code>{brand}</Code>
-            <Colors>{price}</Colors>
+            <Colors>${price}</Colors>
         </Card>
     </CardWrapper>
   )
@@ -33,6 +33,7 @@ border-radius: 10px;
 const ProductImage = styled(Image)`
 border: 4px solid ${theme.colors.secondary};
 border-radius: 15px;
+object-fit: contain;
 `
 
 const Title = styled.p``

@@ -1,22 +1,30 @@
-"use client"
-
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useAuthStore } from '@/stores/authStore';
-
+"use client";
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
+import Image from "next/image";
+import Link from "next/link";
+import { useAuthStore } from "@/stores/authStore";
+import { IoCartOutline } from "react-icons/io5";
+import Slidebar from "./Sidebar";
+import { useCartStore } from "@/stores/cartStore";
 // Header Component
 const Header = () => {
-  const [activeLink, setActiveLink] = useState('');
+  const [activeLink, setActiveLink] = useState("/");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
 
   // Get auth state
   const { isAuthenticated, logout, user } = useAuthStore();
 
-  const navLinks = ['nosotros', 'catalogos', 'productos', 'sucursales', 'marcas'];
+  const navLinks = [
+    "nosotros",
+    "catalogos",
+    "productos",
+    "sucursales",
+    "marcas",
+  ];
 
   useEffect(() => {
     setMounted(true);
@@ -26,107 +34,134 @@ const Header = () => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const handleLogout = () => {
     logout();
   };
 
-  return (
-    <HeaderWrapper>
-      <GreenStrip>
-        {mounted ? (
-          <TopRightContainer>
-            {isAuthenticated() ? (
-              <>
-                <WelcomeText>Bienvenido, {user?.name || 'Usuario'}</WelcomeText>
-                <UserButton onClick={handleLogout}>
-                  Cerrar Sesión
-                </UserButton>
-              </>
-            ) : (
-              <>
-                <AuthButton href="/user/login">
-                  Iniciar Sesión
-                </AuthButton>
-                <AuthButton href="/user/login?form=register">
-                  Registrarse
-                </AuthButton>
-              </>
-            )}
-          </TopRightContainer>
-        ) : (
-          <TopRightContainer aria-hidden="true" style={{ visibility: 'hidden' }}>
-            <AuthButton href="/user/login">Placeholder</AuthButton>
-          </TopRightContainer>
-        )}
-      </GreenStrip>
+  const items = useCartStore((state) => state.items);
+  const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
 
-      <HeaderContainer style={{ boxShadow: scrolled ? '0 4px 20px rgba(104, 171, 68, 0.2)' : '0 2px 10px rgba(0, 0, 0, 0.1)' }}>
-        <LogoContainer>
-          <Link href={"/"}>
-          <Image src="/PLAYERYTEES@2x.png" alt='logo' width={150} height={50}/>
-          </Link>
-        </LogoContainer>
-        
-        <HamburgerButton onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-          {isMobileMenuOpen ? '✕' : '☰'}
-        </HamburgerButton>
-        
-        <NavContainer>
-          <NavLinks isOpen={isMobileMenuOpen}>
-            {navLinks.map((link) => (
-              <NavItem key={link}>
-                <NavLink
-                  href={`/${link}`}
-                  className={activeLink === link ? 'active' : ''}
-                  onClick={() => {
-                    setActiveLink(link);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  onMouseEnter={() => {}}
-                  onMouseLeave={() => {}}
-                >
-                  {link}
-                  <FunHighlight isActive={activeLink === link} />
-                </NavLink>
-              </NavItem>
-            ))}
-            
-            {/* Mobile-only login buttons */}
-            {mounted && (
-              <MobileAuthLinks>
-                {isAuthenticated() ? (
-                  <>
-                    <MobileUserInfo>Bienvenido, {user?.name || 'Usuario'}</MobileUserInfo>
-                    <MobileLogoutButton onClick={handleLogout}>
-                      Cerrar Sesión
-                    </MobileLogoutButton>
-                  </>
-                ) : (
-                  <>
-                    <MobileAuthLink href="/user/login">
-                      Iniciar Sesión
-                    </MobileAuthLink>
-                    <MobileAuthLink href="/user/login?form=register">
-                      Registrarse
-                    </MobileAuthLink>
-                  </>
-                )}
-              </MobileAuthLinks>
-            )}
-          </NavLinks>
-        </NavContainer>
-      </HeaderContainer>
-    </HeaderWrapper>
+  return (
+    <>
+      <HeaderWrapper>
+        <GreenStrip>
+          {mounted ? (
+            <TopRightContainer>
+              {isAuthenticated() ? (
+                <>
+                  <WelcomeText>
+                    Bienvenido, {user?.name || "Usuario"}
+                  </WelcomeText>
+                  <UserButton onClick={handleLogout}>Cerrar Sesión</UserButton>
+                </>
+              ) : (
+                <>
+                  <AuthButton href="/user/login">Iniciar Sesión</AuthButton>
+                  <AuthButton href="/user/login?form=register">
+                    Registrarse
+                  </AuthButton>
+                </>
+              )}
+            </TopRightContainer>
+          ) : (
+            <TopRightContainer
+              aria-hidden="true"
+              style={{ visibility: "hidden" }}
+            >
+              <AuthButton href="/user/login">Placeholder</AuthButton>
+            </TopRightContainer>
+          )}
+        </GreenStrip>
+
+        <HeaderContainer
+          style={{
+            boxShadow: scrolled
+              ? "0 4px 20px rgba(104, 171, 68, 0.2)"
+              : "0 2px 10px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <LogoContainer>
+            <Link href={"/"}>
+              <Image
+                src="/PLAYERYTEES@2x.png"
+                alt="logo"
+                width={150}
+                height={50}
+              />
+            </Link>
+          </LogoContainer>
+
+          <HamburgerButton
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? "✕" : "☰"}
+          </HamburgerButton>
+
+          <NavContainer>
+            <NavLinks isopen={`${isMobileMenuOpen}`}>
+              {navLinks.map((link) => (
+                <NavItem key={link}>
+                  <NavLink
+                    href={`/${link}`}
+                    className={activeLink === link ? "active" : ""}
+                    onClick={() => {
+                      setActiveLink(link);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    onMouseEnter={() => {}}
+                    onMouseLeave={() => {}}
+                  >
+                    {link}
+                    <FunHighlight
+                      isactive={activeLink === link ? "true" : "false"}
+                    />
+                  </NavLink>
+                </NavItem>
+              ))}
+              <IconWrapper onClick={() => setCartOpen((prev) => !prev)}>
+                <IoCartOutline size={28} color="#000" />
+                {totalItems > 0 && <ItemCount>{totalItems}</ItemCount>}
+              </IconWrapper>
+              {/* Mobile-only login buttons */}
+              {mounted && (
+                <MobileAuthLinks>
+                  {isAuthenticated() ? (
+                    <>
+                      <MobileUserInfo>
+                        Bienvenido, {user?.name || "Usuario"}
+                      </MobileUserInfo>
+                      <MobileLogoutButton onClick={handleLogout}>
+                        Cerrar Sesión
+                      </MobileLogoutButton>
+                    </>
+                  ) : (
+                    <>
+                      <MobileAuthLink href="/user/login">
+                        Iniciar Sesión
+                      </MobileAuthLink>
+                      <MobileAuthLink href="/user/login?form=register">
+                        Registrarse
+                      </MobileAuthLink>
+                    </>
+                  )}
+                </MobileAuthLinks>
+              )}
+            </NavLinks>
+          </NavContainer>
+        </HeaderContainer>
+      </HeaderWrapper>
+      <Slidebar isopen={cartOpen} setIsOpen={setCartOpen} />
+    </>
   );
 };
 
-const PRIMARY_COLOR = 'white';
-const SECONDARY_COLOR = 'rgb(104, 171, 68)';
+const PRIMARY_COLOR = "white";
+const SECONDARY_COLOR = "rgb(104, 171, 68)";
 
 const HeaderWrapper = styled.div`
   position: sticky;
@@ -143,7 +178,7 @@ const GreenStrip = styled.div`
   justify-content: flex-end;
   align-items: center;
   padding: 0 2rem;
-  
+
   @media (max-width: 768px) {
     padding: 0 1rem;
     justify-content: center;
@@ -154,7 +189,7 @@ const TopRightContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
-  
+
   @media (max-width: 768px) {
     display: none;
   }
@@ -167,11 +202,11 @@ const AuthButton = styled(Link)`
   font-weight: 500;
   padding: 0 0.75rem;
   border-left: 1px solid rgba(255, 255, 255, 0.3);
-  
+
   &:first-child {
     border-left: none;
   }
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -186,7 +221,7 @@ const UserButton = styled.button`
   cursor: pointer;
   padding: 0 0.75rem;
   border-left: 1px solid rgba(255, 255, 255, 0.3);
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -199,7 +234,7 @@ const WelcomeText = styled.span`
 
 const MobileAuthLinks = styled.div`
   display: none;
-  
+
   @media (max-width: 768px) {
     display: flex;
     flex-direction: column;
@@ -224,7 +259,7 @@ const MobileAuthLink = styled(Link)`
   padding: 0.75rem;
   text-align: center;
   display: block;
-  
+
   &:hover {
     background-color: #f5f5f5;
   }
@@ -241,7 +276,7 @@ const MobileLogoutButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-  
+
   &:hover {
     background-color: #f5f5f5;
   }
@@ -266,7 +301,7 @@ const NavContainer = styled.nav`
 `;
 
 interface NavLinksProps {
-  isOpen: boolean;
+  isopen: string;
 }
 
 const NavLinks = styled.ul<NavLinksProps>`
@@ -274,9 +309,9 @@ const NavLinks = styled.ul<NavLinksProps>`
   list-style: none;
   margin: 0;
   padding: 0;
-  
+
   @media (max-width: 768px) {
-    display: ${({ isOpen }) => (isOpen ? 'flex' : 'none')};
+    display: ${({ isopen }) => (isopen === "true" ? "flex" : "none")};
     flex-direction: column;
     position: absolute;
     top: 100px; /* Adjusted to account for green strip + header height */
@@ -290,7 +325,7 @@ const NavLinks = styled.ul<NavLinksProps>`
 
 const NavItem = styled.li`
   margin: 0 0.5rem;
-  
+
   @media (max-width: 768px) {
     margin: 0.5rem 0;
     width: 100%;
@@ -298,7 +333,7 @@ const NavItem = styled.li`
   }
 `;
 
-const NavLink = styled.a`
+const NavLink = styled(Link)`
   text-decoration: none;
   color: #333;
   font-weight: 500;
@@ -306,19 +341,21 @@ const NavLink = styled.a`
   padding: 0.5rem 1rem;
   border-radius: 4px;
   position: relative;
-  
+
   &:hover {
     color: ${SECONDARY_COLOR};
-    
+
     &::after {
       width: 80%;
       opacity: 1;
-      transition: width 0.3s ease, opacity 0.3s ease;
+      transition:
+        width 0.3s ease,
+        opacity 0.3s ease;
     }
   }
-  
+
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 10%;
@@ -327,10 +364,10 @@ const NavLink = styled.a`
     background-color: ${SECONDARY_COLOR};
     opacity: 0;
   }
-  
+
   &.active {
     color: ${SECONDARY_COLOR};
-    
+
     &::after {
       width: 80%;
       opacity: 1;
@@ -345,14 +382,14 @@ const HamburgerButton = styled.button`
   font-size: 1.5rem;
   cursor: pointer;
   color: #333;
-  
+
   @media (max-width: 768px) {
     display: block;
   }
 `;
 
 interface FunHighlightProps {
-  isActive: boolean;
+  isactive: string;
 }
 
 const FunHighlight = styled.span<FunHighlightProps>`
@@ -364,8 +401,26 @@ const FunHighlight = styled.span<FunHighlightProps>`
   border-radius: 50%;
   width: 8px;
   height: 8px;
-  opacity: ${({ isActive }) => (isActive ? 1 : 0)};
+  opacity: ${({ isactive }) => (isactive === "true" ? 1 : 0)};
   transition: opacity 0.3s ease;
+`;
+
+const IconWrapper = styled.div`
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+`;
+
+const ItemCount = styled.span`
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: red;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 999px;
 `;
 
 export default Header;

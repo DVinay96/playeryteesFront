@@ -8,92 +8,69 @@ import { ChevronLeft, ChevronRight, Download, X } from "lucide-react";
 interface Catalog {
   id: number;
   title: string;
-  coverImage: string;
-  downloadUrl: string;
+  file: string;
+  file_img: string;
 }
-
-const catalogData = [
-  {
-    id: 1,
-    title: "Catálogo Primavera 2025",
-    coverImage: "/catalogo.svg",
-    downloadUrl: "/catalogs/primavera-2025.pdf",
-  },
-  {
-    id: 2,
-    title: "Catálogo Verano 2025",
-    coverImage: "/catalogo.svg",
-    downloadUrl: "/catalogs/verano-2025.pdf",
-  },
-  {
-    id: 3,
-    title: "Catálogo Otoño 2025",
-    coverImage: "/catalogo.svg",
-    downloadUrl: "/catalogs/otono-2025.pdf",
-  },
-  {
-    id: 4,
-    title: "Catálogo Invierno 2025",
-    coverImage: "/catalogo.svg",
-    downloadUrl: "/catalogs/invierno-2025.pdf",
-  },
-  {
-    id: 5,
-    title: "Catálogo Especial",
-    coverImage: "/catalogo.svg",
-    downloadUrl: "/catalogs/especial-2025.pdf",
-  },
-  {
-    id: 6,
-    title: "Catálogo Promocional",
-    coverImage: "/catalogo.svg",
-    downloadUrl: "/catalogs/promocional-2025.pdf",
-  },
-];
 
 const PRIMARY_COLOR = "white";
 const SECONDARY_COLOR = "rgb(104, 171, 68)";
 
-
-
 const CatalogCarousel = () => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectedCatalog, setSelectedCatalog] = useState<Catalog | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [itemsPerView, setItemsPerView] = useState(3); 
+  const [itemsPerView, setItemsPerView] = useState(3);
   const sliderRef = useRef(null);
-  const totalItems = catalogData.length;
+  const totalItems = catalogs.length;
   const maxIndex = totalItems - itemsPerView;
+
+  useEffect(() => {
+    const fetchCatalogs = async () => {
+      try {
+        const response = await fetch(`${apiUrl}catalogs`);
+        const data = await response.json();
+        setCatalogs(data.data);
+      } catch (error) {
+        console.error("Error fetching catalogs:", error);
+      }
+    };
+
+    fetchCatalogs();
+    //eslint-disable-next-line
+  }, []);
 
   useEffect(() => {
     const calculateItemsPerView = () => {
       return window.innerWidth > 992 ? 3 : window.innerWidth > 576 ? 2 : 1;
     };
-    
+
     setItemsPerView(calculateItemsPerView());
-    
+
     const handleResize = () => {
       const newItemsPerView = calculateItemsPerView();
       setItemsPerView(newItemsPerView);
-      
+
       if (activeIndex > totalItems - newItemsPerView) {
         setActiveIndex(Math.max(0, totalItems - newItemsPerView));
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [activeIndex, totalItems]);
 
   useEffect(() => {
     if (isModalOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
-    
+
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [isModalOpen]);
 
@@ -114,31 +91,32 @@ const CatalogCarousel = () => {
     setIsModalOpen(false);
   };
 
-
   return (
     <CarouselSection>
       <CarouselTitle>Nuestros Catálogos</CarouselTitle>
-      
+
       <CarouselContainer>
-        <NavigationButton 
-          className="left" 
-          onClick={handlePrevClick} 
+        <NavigationButton
+          className="left"
+          onClick={handlePrevClick}
           disabled={activeIndex === 0}
           aria-label="Previous catalog"
         >
           <ChevronLeft size={24} />
         </NavigationButton>
-        
-        <CarouselSlider 
-          ref={sliderRef} 
-          style={{ transform: `translateX(-${activeIndex * (100 / itemsPerView)}%)` }}
+
+        <CarouselSlider
+          ref={sliderRef}
+          style={{
+            transform: `translateX(-${activeIndex * (100 / itemsPerView)}%)`,
+          }}
         >
-          {catalogData.map((catalog) => (
+          {catalogs.map((catalog) => (
             <CatalogItem key={catalog.id} onClick={() => openModal(catalog)}>
               <CatalogImageContainer>
-                <Image 
-                  src={catalog.coverImage} 
-                  alt={catalog.title} 
+                <Image
+                  src={catalog.file_img}
+                  alt={catalog.title}
                   fill
                   style={{ objectFit: "cover" }}
                 />
@@ -149,40 +127,37 @@ const CatalogCarousel = () => {
             </CatalogItem>
           ))}
         </CarouselSlider>
-        
-        <NavigationButton 
-          className="right" 
-          onClick={handleNextClick} 
+
+        <NavigationButton
+          className="right"
+          onClick={handleNextClick}
           disabled={activeIndex >= maxIndex}
           aria-label="Next catalog"
         >
           <ChevronRight size={24} />
         </NavigationButton>
       </CarouselContainer>
-      
+
       <ModalOverlay isOpen={isModalOpen} onClick={closeModal}>
-        <ModalContent 
-          isOpen={isModalOpen} 
-          onClick={(e) => e.stopPropagation()}
-        >
+        <ModalContent isOpen={isModalOpen} onClick={(e) => e.stopPropagation()}>
           <CloseButton onClick={closeModal} aria-label="Close modal">
             <X size={24} />
           </CloseButton>
-          
+
           {selectedCatalog && (
             <>
               <ModalImageContainer>
-                <Image 
-                  src={selectedCatalog.coverImage} 
-                  alt={selectedCatalog.title} 
+                <Image
+                  src={selectedCatalog.file_img}
+                  alt={selectedCatalog.title}
                   fill
                   style={{ objectFit: "contain" }}
                 />
               </ModalImageContainer>
-              
+
               <ModalInfo>
                 <ModalTitle>{selectedCatalog.title}</ModalTitle>
-                <DownloadButton href={selectedCatalog.downloadUrl} download>
+                <DownloadButton href={selectedCatalog.file} download>
                   <Download size={20} />
                   Descargar Catálogo
                 </DownloadButton>
@@ -207,9 +182,9 @@ const CarouselTitle = styled.h2`
   color: #333;
   position: relative;
   padding-bottom: 1rem;
-  
+
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 50%;
@@ -230,7 +205,6 @@ const CarouselContainer = styled.div`
 const CarouselSlider = styled.div`
   display: flex;
   transition: transform 0.5s ease;
-  
 `;
 
 const CatalogItem = styled.div`
@@ -241,17 +215,19 @@ const CatalogItem = styled.div`
   overflow: hidden;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   background-color: ${PRIMARY_COLOR};
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
   }
-  
+
   @media (max-width: 992px) {
     flex: 0 0 calc(50% - 2rem);
   }
-  
+
   @media (max-width: 576px) {
     flex: 0 0 calc(100% - 2rem);
   }
@@ -292,31 +268,30 @@ const NavigationButton = styled.button`
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
   z-index: 2;
-  
+
   &:hover {
     background-color: ${SECONDARY_COLOR};
     color: ${PRIMARY_COLOR};
   }
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     background-color: #f0f0f0;
     color: #aaa;
   }
-  
+
   &.left {
     left: 5px;
   }
-  
+
   &.right {
     right: 5px;
   }
-  
+
   @media (max-width: 768px) {
     width: 40px;
     height: 40px;
-    
   }
 `;
 
@@ -337,7 +312,9 @@ const ModalOverlay = styled.div<ModalOverlayProps>`
   z-index: 1000;
   opacity: ${({ isOpen }) => (isOpen ? 1 : 0)};
   visibility: ${({ isOpen }) => (isOpen ? "visible" : "hidden")};
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
 `;
 
 interface ModalContentProps {
@@ -371,7 +348,7 @@ const CloseButton = styled.button`
   align-items: center;
   justify-content: center;
   transition: background-color 0.3s ease;
-  
+
   &:hover {
     background-color: rgba(0, 0, 0, 0.1);
   }
@@ -381,11 +358,11 @@ const ModalImageContainer = styled.div`
   position: relative;
   width: 100%;
   height: 500px;
-  
+
   @media (max-width: 768px) {
     height: 400px;
   }
-  
+
   @media (max-width: 576px) {
     height: 300px;
   }
@@ -414,11 +391,11 @@ const DownloadButton = styled.a`
   cursor: pointer;
   text-decoration: none;
   transition: background-color 0.3s ease;
-  
+
   svg {
     margin-right: 8px;
   }
-  
+
   &:hover {
     background-color: #5ca53e; /* Darker version of the secondary color */
   }

@@ -1,11 +1,12 @@
-'use client'
-import React, { useState } from 'react'
-import styled from 'styled-components'
-import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-import { theme } from '@/styles/globalStyles'
-import PurchaseModal from '@/components/PurchaseModal'
-import { useAuthStore } from '@/stores/authStore'
+"use client";
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { theme } from "@/styles/globalStyles";
+import PurchaseModal from "@/components/PurchaseModal";
+import { useAuthStore } from "@/stores/authStore";
+import { useCartStore } from "@/stores/cartStore";
 interface ColorType {
   name: string;
   hex: string;
@@ -38,19 +39,79 @@ interface OrderItem {
 }
 
 interface ProductDetailProps {
-  product: ProductType;
+  id: string;
 }
 
-const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
-  const [selectedColor, setSelectedColor] = useState(product.colors[0]);
-  const [selectedSize, setSelectedSize] = useState(product.sizes[1]); // Default to Medium or second size
+const ProductDetail: React.FC<ProductDetailProps> = ({ id }) => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const [product, setProduct] = useState<ProductType>({
+    _id: "1",
+    name: "Playera Cuello Redondo",
+    brand: "PlayerYTees",
+    code: "410C",
+    colors: [
+      { name: "Negro", hex: "#000000" },
+      { name: "Blanco", hex: "#FFFFFF" },
+      { name: "Azul", hex: "#0000FF" },
+    ],
+    sizes: ["S", "M", "L", "XL"],
+    weight: "180g",
+    fabric: "Jersey",
+    composition: "100% Algodón",
+    description: "Playera de algodón 100% con cuello redondo.",
+    mainImage: "/PLAYERA ROJA.svg",
+    prices: [
+      { quantity: "1-9", price: "$150.00" },
+      { quantity: "10-49", price: "$135.00" },
+      { quantity: "50+", price: "$120.00" },
+    ],
+  });
+  const [selectedColor, setSelectedColor] = useState(product.colors[0]); // Default to first color
+  const [selectedSize, setSelectedSize] = useState(product.sizes[0]); // Default to first size
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [cartItems, setCartItems] = useState<OrderItem[]>([]);
-  
+
+  useEffect(() => {
+    // Fetch product data based on the provided ID
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch(`${apiUrl}products/${id}`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch product");
+        }
+        const res = await response.json();
+        const productData = res.data;
+        console.log("🦙 ~ fetchProduct ~ productData:", productData);
+
+        // Set initial selected color and size
+        // setSelectedColor(productData.colors[0]);
+        // setSelectedSize(productData.sizes[0]);
+        setProduct({
+          ...product,
+          _id: productData.itemCode,
+          name: productData.itemName,
+          brand: productData.brand,
+          code: productData.code,
+          description: productData.description,
+          mainImage: productData.image,
+          weight: productData.weight,
+          fabric: productData.fabric,
+          composition: productData.composition,
+        });
+      } catch (error) {
+        console.error("Error fetching product:", error);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
   // Get auth state and actions from auth store
   const { isAuthenticated } = useAuthStore();
-  
+  const { addItem } = useCartStore();
+
   const router = useRouter();
 
   const handleOpenModal = () => {
@@ -64,61 +125,71 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
-  
+
   const handleCloseLoginPrompt = () => {
     setShowLoginPrompt(false);
   };
-  
+
   const handleGoToLogin = () => {
-    router.push('/login?redirect=' + window.location.pathname);
+    router.push("/login?redirect=" + window.location.pathname);
   };
-  
+
   const handleAddToCart = (items: OrderItem[]) => {
     // For now, we'll just store items in local state
     // Later, this can be connected to your Zustand store
-    setCartItems(prev => [...prev, ...items]);
-    
+    setCartItems((prev) => [...prev, ...items]);
+
+     items.forEach((item) => {
+      addItem({
+        id: product._id,
+        name: product.name,
+        quantity: item.quantity,
+        image: product.mainImage,
+        prices: product.prices,
+        size: item.size,
+        color: item.colorName,
+      });
+    });
+
     // You would typically save to localStorage or send to an API here
-    
+
     // Show success message
     const totalNewItems = items.reduce((sum, item) => sum + item.quantity, 0);
-    alert(`${totalNewItems} items added to cart successfully!`);
+    // alert(`${totalNewItems} items added to cart successfully!`);
   };
 
   return (
     <ProductContainer>
       <ProductImageSection>
         <div className="image-container">
-          <Image 
-            src={product.mainImage} 
+          <Image
+            src={product.mainImage}
             alt={product.name}
             fill
             priority
             sizes="(max-width: 768px) 100vw, 50vw"
-            style={{ objectFit: 'cover' }}
+            style={{ objectFit: "cover" }}
           />
         </div>
       </ProductImageSection>
-      
+
       <ProductInfoSection>
         <ProductHeader>
           <BrandName>{product.brand}</BrandName>
           <ProductName>{product.name}</ProductName>
           {product.code && <ProductCode>Código: {product.code}</ProductCode>}
-          <ProductDescription>
-            {product.description}
-          </ProductDescription>
+          <ProductDescription>{product.description}</ProductDescription>
         </ProductHeader>
-        
+
         <ProductSpecs>
           <SpecTitle>Especificaciones</SpecTitle>
           <SpecGrid>
             <SpecItem>
               <SpecLabel>Tallas Disponibles</SpecLabel>
               <SizesContainer>
-                {product.sizes.map(size => (
-                  <SizeButton 
-                    key={size} 
+                {product.sizes.map((size) => (
+                  <SizeButton
+                    key={size}
                     selected={size === selectedSize}
                     onClick={() => setSelectedSize(size)}
                   >
@@ -127,29 +198,29 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 ))}
               </SizesContainer>
             </SpecItem>
-            
+
             <SpecItem>
               <SpecLabel>Peso</SpecLabel>
               <SpecValue>{product.weight}</SpecValue>
             </SpecItem>
-            
+
             <SpecItem>
               <SpecLabel>Tela</SpecLabel>
               <SpecValue>{product.fabric}</SpecValue>
             </SpecItem>
-            
+
             <SpecItem>
               <SpecLabel>Composición</SpecLabel>
               <SpecValue>{product.composition}</SpecValue>
             </SpecItem>
           </SpecGrid>
         </ProductSpecs>
-        
+
         <ColorSection>
           <SpecLabel>Colores Disponibles</SpecLabel>
           <ColorsContainer>
-            {product.colors.map(color => (
-              <ColorButton 
+            {product.colors.map((color) => (
+              <ColorButton
                 key={color.name}
                 color={color.hex}
                 selected={color.name === selectedColor.name}
@@ -160,7 +231,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           </ColorsContainer>
           <SelectedColorName>{selectedColor.name}</SelectedColorName>
         </ColorSection>
-        
+
         <PriceSection>
           <SpecTitle>Precios por Volumen</SpecTitle>
           <PriceTable>
@@ -180,29 +251,29 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             </tbody>
           </PriceTable>
         </PriceSection>
-        
+
         <BuySection>
-          <BuyButton onClick={handleOpenModal}>
-            COTIZAR AHORA
-          </BuyButton>
+          <BuyButton onClick={handleOpenModal}>COTIZAR AHORA</BuyButton>
         </BuySection>
       </ProductInfoSection>
 
       {/* Order Modal Component */}
-      <PurchaseModal 
+      <PurchaseModal
         product={product}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onAddToCart={handleAddToCart}
       />
-      
+
       {/* Login Prompt Modal */}
       {showLoginPrompt && (
         <LoginPromptOverlay>
           <LoginPromptContainer>
             <LoginPromptHeader>
               <LoginPromptTitle>Iniciar Sesión Requerido</LoginPromptTitle>
-              <CloseButton onClick={handleCloseLoginPrompt}>&times;</CloseButton>
+              <CloseButton onClick={handleCloseLoginPrompt}>
+                &times;
+              </CloseButton>
             </LoginPromptHeader>
             <LoginPromptMessage>
               Necesitas iniciar sesión para agregar productos al carrito.
@@ -219,8 +290,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         </LoginPromptOverlay>
       )}
     </ProductContainer>
-  )
-}
+  );
+};
 
 // Styled Components
 const ProductContainer = styled.div`
@@ -228,7 +299,7 @@ const ProductContainer = styled.div`
   max-width: 1200px;
   margin: 3rem auto;
   padding: 0 1rem;
-  
+
   @media (max-width: 992px) {
     flex-direction: column;
     margin: 2rem auto;
@@ -238,7 +309,7 @@ const ProductContainer = styled.div`
 const ProductImageSection = styled.div`
   flex: 1;
   position: relative;
-  
+
   .image-container {
     position: relative;
     width: 100%;
@@ -247,13 +318,13 @@ const ProductImageSection = styled.div`
     overflow: hidden;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   }
-  
+
   @media (max-width: 992px) {
     .image-container {
       height: 400px;
     }
   }
-  
+
   @media (max-width: 576px) {
     .image-container {
       height: 300px;
@@ -264,7 +335,7 @@ const ProductImageSection = styled.div`
 const ProductInfoSection = styled.div`
   flex: 1;
   padding-left: 3rem;
-  
+
   @media (max-width: 992px) {
     padding-left: 0;
     margin-top: 2rem;
@@ -285,7 +356,7 @@ const ProductName = styled.h1`
   font-size: 2.5rem;
   color: ${theme.colors.text.primary};
   margin-bottom: 0.5rem;
-  
+
   @media (max-width: 768px) {
     font-size: 2rem;
   }
@@ -312,9 +383,9 @@ const SpecTitle = styled.h2`
   margin-bottom: 1rem;
   position: relative;
   padding-bottom: 0.5rem;
-  
+
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 0;
@@ -328,7 +399,7 @@ const SpecGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
-  
+
   @media (max-width: 576px) {
     grid-template-columns: 1fr;
   }
@@ -357,13 +428,15 @@ const SizesContainer = styled.div`
 
 const SizeButton = styled.button<{ selected: boolean }>`
   padding: 0.5rem 0.75rem;
-  background-color: ${props => props.selected ? theme.colors.secondary : 'white'};
-  color: ${props => props.selected ? 'white' : theme.colors.text.primary};
-  border: 1px solid ${props => props.selected ? theme.colors.secondary : '#e0e0e0'};
+  background-color: ${(props) =>
+    props.selected ? theme.colors.secondary : "white"};
+  color: ${(props) => (props.selected ? "white" : theme.colors.text.primary)};
+  border: 1px solid
+    ${(props) => (props.selected ? theme.colors.secondary : "#e0e0e0")};
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s ease;
-  
+
   &:hover {
     border-color: ${theme.colors.secondary};
   }
@@ -383,12 +456,16 @@ const ColorButton = styled.button<{ color: string; selected: boolean }>`
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background-color: ${props => props.color};
-  border: 2px solid ${props => props.selected ? theme.colors.secondary : '#e0e0e0'};
+  background-color: ${(props) => props.color};
+  border: 2px solid
+    ${(props) => (props.selected ? theme.colors.secondary : "#e0e0e0")};
   cursor: pointer;
   transition: transform 0.3s ease;
-  box-shadow: ${props => props.selected ? '0 0 0 2px white, 0 0 0 4px ' + theme.colors.secondary : 'none'};
-  
+  box-shadow: ${(props) =>
+    props.selected
+      ? "0 0 0 2px white, 0 0 0 4px " + theme.colors.secondary
+      : "none"};
+
   &:hover {
     transform: scale(1.1);
   }
@@ -407,23 +484,24 @@ const PriceSection = styled.div`
 const PriceTable = styled.table`
   width: 100%;
   border-collapse: collapse;
-  
-  th, td {
+
+  th,
+  td {
     padding: 0.75rem 1rem;
     text-align: left;
     border-bottom: 1px solid #e0e0e0;
   }
-  
+
   th {
     font-weight: bold;
     color: ${theme.colors.text.primary};
     background-color: #f8f9fa;
   }
-  
+
   tr:last-child td {
     border-bottom: none;
   }
-  
+
   tr:hover td {
     background-color: #f8f9fa;
   }
@@ -445,11 +523,11 @@ const BuyButton = styled.button`
   text-decoration: none;
   transition: background-color 0.3s ease;
   text-align: center;
-  
+
   &:hover {
     background-color: #5ca53e; /* Darker version of the secondary color */
   }
-  
+
   @media (max-width: 576px) {
     width: 100%;
   }
@@ -499,7 +577,7 @@ const CloseButton = styled.button`
   font-size: 1.5rem;
   cursor: pointer;
   color: ${theme.colors.text.secondary};
-  
+
   &:hover {
     color: ${theme.colors.secondary};
   }
@@ -514,7 +592,7 @@ const LoginPromptActions = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  
+
   @media (max-width: 576px) {
     flex-direction: column;
   }
@@ -528,11 +606,11 @@ const CancelButton = styled.button`
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  
+
   &:hover {
     background-color: #f8f9fa;
   }
-  
+
   @media (max-width: 576px) {
     width: 100%;
   }
@@ -547,11 +625,11 @@ const LoginButton = styled.button`
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  
+
   &:hover {
     background-color: #5ca53e; /* Darker version of the secondary color */
   }
-  
+
   @media (max-width: 576px) {
     width: 100%;
   }

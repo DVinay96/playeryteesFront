@@ -1,23 +1,25 @@
-import React from 'react';
-import styled from 'styled-components';
-import { theme } from '@/styles/globalStyles'
-import { 
-  Facebook, 
-  Instagram, 
-  Twitter, 
-  Linkedin, 
-  MapPin, 
-  Phone, 
-  Mail
-} from 'lucide-react';
-import Image from 'next/image';
+import React from "react";
+import styled from "styled-components";
+import { theme } from "@/styles/globalStyles";
+import {
+  Facebook,
+  Instagram,
+  Twitter,
+  Linkedin,
+  MapPin,
+  Phone,
+  Mail,
+} from "lucide-react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 
 // Styled Components
 const FooterContainer = styled.footer`
   background-color: ${theme.colors.primary};
   border-top: 1px solid ${theme.colors.border.light};
   padding: 3rem 2rem;
-  
+
   @media (max-width: ${theme.breakpoints.sm}) {
     padding: 2rem 1rem;
   }
@@ -29,11 +31,11 @@ const FooterContent = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 2rem;
-  
+
   @media (max-width: ${theme.breakpoints.md}) {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   @media (max-width: ${theme.breakpoints.sm}) {
     grid-template-columns: 1fr;
   }
@@ -50,9 +52,9 @@ const FooterHeading = styled.h4`
   margin-bottom: 1.25rem;
   position: relative;
   padding-bottom: 0.75rem;
-  
+
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 0;
@@ -70,7 +72,7 @@ const FooterLinkList = styled.ul`
 
 const FooterLink = styled.li`
   margin-bottom: 0.75rem;
-  
+
   a {
     text-decoration: none;
     color: ${theme.colors.text.secondary};
@@ -78,14 +80,14 @@ const FooterLink = styled.li`
     transition: color 0.3s ease;
     position: relative;
     padding-left: 0;
-    
+
     &:hover {
       color: ${theme.colors.secondary};
       padding-left: 10px;
     }
-    
+
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       left: 0;
       top: 50%;
@@ -96,7 +98,7 @@ const FooterLink = styled.li`
       transition: width 0.3s ease;
       opacity: 0;
     }
-    
+
     &:hover::before {
       width: 6px;
       opacity: 1;
@@ -110,7 +112,7 @@ const FooterContactItem = styled.div`
   align-items: flex-start;
   margin-bottom: 1rem;
   color: ${theme.colors.text.secondary};
-  
+
   svg {
     margin-right: 0.75rem;
     margin-top: 0.25rem;
@@ -141,13 +143,13 @@ const SocialIcon = styled.a`
   color: ${theme.colors.text.primary};
   margin-right: 0.75rem;
   transition: all 0.3s ease;
-  
+
   &:hover {
     background-color: ${theme.colors.secondary};
     color: white;
     transform: translateY(-3px);
   }
-  
+
   svg {
     width: 18px;
     height: 18px;
@@ -164,7 +166,7 @@ const BottomBar = styled.div`
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
-  
+
   @media (max-width: ${theme.breakpoints.sm}) {
     flex-direction: column;
     text-align: center;
@@ -174,7 +176,7 @@ const BottomBar = styled.div`
 const Copyright = styled.p`
   color: ${theme.colors.text.secondary};
   font-family: ${theme.typography.fontFamilyRegular};
-  
+
   @media (max-width: ${theme.breakpoints.sm}) {
     margin-bottom: 1rem;
   }
@@ -182,7 +184,7 @@ const Copyright = styled.p`
 
 const LegalLinks = styled.div`
   display: flex;
-  
+
   @media (max-width: ${theme.breakpoints.sm}) {
     flex-direction: column;
     align-items: center;
@@ -195,11 +197,11 @@ const LegalLink = styled.a`
   margin-left: 1.5rem;
   text-decoration: none;
   transition: color 0.3s ease;
-  
+
   &:hover {
     color: ${theme.colors.secondary};
   }
-  
+
   @media (max-width: ${theme.breakpoints.sm}) {
     margin: 0.5rem 0;
     margin-left: 0;
@@ -222,18 +224,53 @@ const Logo = styled(Image)`
   border-radius: 4px;
 `;
 
+interface Category {
+  id: number;
+  file: string;
+  title: string;
+  subtitle: string;
+}
+
 // Delete all the custom SVG icon components (LocationIcon, PhoneIcon, EmailIcon, etc.)
 // Footer Component
 const Footer = () => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${apiUrl}categories`);
+        const data = await response.json();
+        setCategories(data.data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
+    //eslint-disable-next-line
+  }, []);
   return (
     <FooterContainer>
       <FooterContent>
         <FooterSection>
           <LogoContainer>
-            <Logo src="/PLAYERYTEES@2x.png" alt='logo' width={150} height={50}/>
+            <Logo
+              src="/PLAYERYTEES@2x.png"
+              alt="logo"
+              width={150}
+              height={50}
+            />
           </LogoContainer>
-          <p style={{ color: theme.colors.text.secondary, marginBottom: '1.5rem' }}>
-            Proporcionando productos de calidad y servicio excepcional a nuestros clientes desde 1995.
+          <p
+            style={{
+              color: theme.colors.text.secondary,
+              marginBottom: "1.5rem",
+            }}
+          >
+            Proporcionando productos de calidad y servicio excepcional a
+            nuestros clientes desde 1995.
           </p>
           <SocialIcons>
             <SocialIcon href="#" aria-label="Facebook">
@@ -250,34 +287,48 @@ const Footer = () => {
             </SocialIcon>
           </SocialIcons>
         </FooterSection>
-        
+
         <FooterSection>
           <FooterHeading>Enlaces</FooterHeading>
           <FooterLinkList>
-            <FooterLink><a href="#nosotros">Nosotros</a></FooterLink>
-            <FooterLink><a href="#catalogos">Catálogos</a></FooterLink>
-            <FooterLink><a href="#productos">Productos</a></FooterLink>
-            <FooterLink><a href="#sucursales">Sucursales</a></FooterLink>
-            <FooterLink><a href="#marcas">Marcas</a></FooterLink>
+            <FooterLink>
+              <a href="#nosotros">Nosotros</a>
+            </FooterLink>
+            <FooterLink>
+              <a href="#catalogos">Catálogos</a>
+            </FooterLink>
+            <FooterLink>
+              <a href="#productos">Productos</a>
+            </FooterLink>
+            <FooterLink>
+              <a href="#sucursales">Sucursales</a>
+            </FooterLink>
+            <FooterLink>
+              <a href="#marcas">Marcas</a>
+            </FooterLink>
           </FooterLinkList>
         </FooterSection>
-        
+
         <FooterSection>
           <FooterHeading>Productos</FooterHeading>
           <FooterLinkList>
-            <FooterLink><a href="#categoria1">Categoría 1</a></FooterLink>
-            <FooterLink><a href="#categoria2">Categoría 2</a></FooterLink>
-            <FooterLink><a href="#categoria3">Categoría 3</a></FooterLink>
-            <FooterLink><a href="#categoria4">Categoría 4</a></FooterLink>
-            <FooterLink><a href="#categoria5">Categoría 5</a></FooterLink>
+            {categories.map((category) => (
+              <FooterLink key={category.id}>
+                <Link href={`/productos?category_id=${category.id}`}>
+                  {category.title}
+                </Link>
+              </FooterLink>
+            ))}
           </FooterLinkList>
         </FooterSection>
-        
+
         <FooterSection>
           <FooterHeading>Contacto</FooterHeading>
           <FooterContactItem>
             <MapPin />
-            <ContactText>Calle Principal #123, Colonia Centro, Ciudad de México, 12345</ContactText>
+            <ContactText>
+              Calle Principal #123, Colonia Centro, Ciudad de México, 12345
+            </ContactText>
           </FooterContactItem>
           <FooterContactItem>
             <Phone />
@@ -289,9 +340,12 @@ const Footer = () => {
           </FooterContactItem>
         </FooterSection>
       </FooterContent>
-      
+
       <BottomBar>
-        <Copyright>&copy; {new Date().getFullYear()} Tu Empresa. Todos los derechos reservados.</Copyright>
+        <Copyright>
+          &copy; {new Date().getFullYear()} Tu Empresa. Todos los derechos
+          reservados.
+        </Copyright>
         <LegalLinks>
           <LegalLink href="#terminos">Términos y Condiciones</LegalLink>
           <LegalLink href="#privacidad">Política de Privacidad</LegalLink>

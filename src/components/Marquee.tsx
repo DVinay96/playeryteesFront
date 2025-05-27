@@ -1,33 +1,43 @@
 "use client";
-
 import React from "react";
 import styled from "styled-components";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
+interface Branch {
+  id: number;
+  name: string;
+  file: string;
+}
 
 const LogoMarquee = () => {
-  const logos = [
-    "/BONES@2x.png",
-    "/CLUB CABO@2x.png",
-    "/FITCAP@2x.png",
-    "/GILDAN@2x.png",
-    "/JERZEES@2x.png",
-    "/OUTDOOR@2x.png",
-    "/PUNTO PUNTADA@2x.png",
-    "/SPORT CAPS@2x.png"
-  ];
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const [branches, setBranches] = useState<Branch[]>([]);
 
-  const repeatedLogos = [...logos, ...logos];
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const response = await fetch(`${apiUrl}brands`);
+        const data = await response.json();
+        setBranches(data.data);
+      } catch (error) {
+        console.error("Error fetching branches:", error);
+      }
+    };
+    fetchBranches();
+  }, []);
+
+  const repeatedLogos = [...branches, ...branches];
 
   return (
     <MarqueeWrapper>
       <MarqueeContent>
         {repeatedLogos.map((logo, index) => (
           <LogoItem key={index}>
-            <Image 
-              src={logo} 
-              alt={`Partner Logo ${index + 1}`} 
-              width={120} 
+            <Image
+              src={logo.file}
+              alt={`Partner Logo ${index + 1}`}
+              width={120}
               height={60}
               style={{ objectFit: "contain" }}
             />
