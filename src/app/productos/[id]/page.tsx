@@ -1,6 +1,6 @@
 import ProductDetail from "./ProductIdContent";
 
-export default async function Page({ params }: { params: { id: string } }) {
+export default async function Page({ params }: any) {
   return <ProductDetail id={params.id} />;
 }
 
